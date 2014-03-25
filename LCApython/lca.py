@@ -1,5 +1,4 @@
 import numpy as np
-import scipy as sp
 
 #Initialize settings for inference
 def infer(basis,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt):
