@@ -20,16 +20,16 @@ def main():
     nlong = 1
     
     #Setup variables for inference
-    numDict = int(800)
-    numBatch = int(128)
-    dataSize = int(256)
+    numDict = int(1600)
+    numBatch = int(256)
+    dataSize = int(8196)
     dictsIn = np.random.uniform(size=(numDict,dataSize))
     coeffs = np.random.uniform(size=(numBatch,numDict))
     stimuli = np.random.uniform(size=(numBatch,dataSize))
     batchCoeffs = np.random.uniform(size=(numBatch,numDict))
     eta = .01
     lamb = .05
-    nIter = 300
+    nIter = 100
     softThresh = int(0)
     adapt = .99
     thresh = np.random.uniform(size=numBatch)
@@ -103,7 +103,7 @@ def main():
     """
 
 
-    """
+    
     start = timer()
     lcav.infer(dictsIn,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt)
     dt = timer()-start
@@ -131,7 +131,7 @@ def main():
     print '----------Vectorized Cython based LCA---------'
     print 'Average time over '+str(num)+' trials:'
     print '%f s' % dt
-    """
+    
 
     """
     dictsIn = np.array(dictsIn,order='F')
