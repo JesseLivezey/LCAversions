@@ -12,13 +12,13 @@ Current implementations include:
 * LCAnumbaprog: NumbaPro GPU implementation. Requires numbapro.
 
 Cython based versions can be compiled using the command:
-'''
+```
 python setup.py build_ext --inplace
-'''
+```
 in the individual folders.
 
 The Fortran based version can be compiled using the command:
-'''
+```
 f2py -c -m lca lca.f90
-'''
+```
 in the fortran folder.
