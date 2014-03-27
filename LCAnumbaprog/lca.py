@@ -21,6 +21,12 @@ def cinit(dictionary,c):
         for k in xrange(m):
             c[i,j] += dictionary[i,k]*dictionary[j,k]
 
+@cuda.jit('void(f4[:,:])')
+def csub(c):
+    i = cuda.grid(1)
+    
+    c[i,i] = 0.
+
 @cuda.jit('void(f4[:,:],f4[:,:],f4[:,:])')
 def binit(dictionary,stimuli,b):
     n = stimuli.shape[0]
@@ -62,24 +68,29 @@ def infer(dictionary,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt):
     d_c = cuda.to_device(np.zeros((numDict,numDict),dtype=np.float32,order='F'))
     
     #Move inputs to GPU
-    d_dictionary = cuda.to_device(dictionary)
-    d_coeffs = cuda.to_device(coeffs)
-    d_stimuli = cuda.to_device(stimuli)
+    d_dictionary = cuda.to_device(np.array(dictionary,dtype=np.float32,order='F'))
+    d_coeffs = cuda.to_device(np.array(coeffs,dtype=np.float32,order='F'))
+    d_stimuli = cuda.to_device(np.array(stimuli,dtype=np.float32,order='F'))
 
-    blockdim = (32,32)
-    griddimc = (int(numDict/blockdim[0]),int(numDict/blockdim[1]))
-    griddimb = (int(numStim/blockdim[0]),int(numDict/blockdim[1]))
-    griddimi = (int(numStim/blockdim[0]),int(numDict/blockdim[1]))
+    blockdim2 = (32,32)
+    blockdim1 = 32
+    #griddimc = (int(numDict/blockdim[0]),int(numDict/blockdim[1]))
+    griddimcsub = int(numDict/blockdim1)
+    griddimb = (int(numStim/blockdim2[0]),int(numDict/blockdim2[1]))
+    griddimi = (int(numStim/blockdim2[0]),int(numDict/blockdim2[1]))
     
     #Calculate c: overlap of basis functions with each other minus identity
-    cinit[griddimc,blockdim](d_dictionary,d_c)
-    binit[griddimb,blockdim](d_dictionary,d_stimuli,d_b)
+    #cinit[griddimc,blockdim](d_dictionary,d_c)
+    bs.gemm('N','T',numDict,numDict,dataLength,1.,d_dictionary,d_dictionary,0.,d_c)
+    csub[griddimcsub,blockdim1](d_c)
+    #binit[griddimb,blockdim2](d_dictionary,d_stimuli,d_b)
+    bs.gemm('N','T',numStim,numDict,dataLength,1.,d_stimuli,d_dictionary,0.,d_b)
     thresh = np.mean(np.absolute(d_b.copy_to_host()))
     #Update u[i] and s[i] for nIter time steps
     for kk in xrange(nIter):
         #Calculate ci: amount other neurons are stimulated times overlap with rest of basis
         bs.gemm('N','N',numStim,numDict,numDict,1.,d_s,d_c,0.,d_ci)
-        iter[griddimi,blockdim](d_c,d_b,d_ci,d_u,d_s,eta,thresh,adapt,softThresh)
+        iter[griddimi,blockdim2](d_c,d_b,d_ci,d_u,d_s,eta,thresh,adapt,softThresh)
         if thresh > lamb:
             thresh = adapt*thresh
     u = d_u.copy_to_host()

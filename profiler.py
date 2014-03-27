@@ -21,7 +21,7 @@ def main():
     
     #Setup variables for inference
     numDict = int(1024)
-    numBatch = int(256)
+    numBatch = int(128)
     dataSize = int(256)
     dictsIn = np.random.randn(numDict,dataSize)
     coeffs = np.random.randn(numBatch,numDict)
