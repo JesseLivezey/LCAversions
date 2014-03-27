@@ -4,8 +4,8 @@ import numpy as np
 from timeit import default_timer as timer
 
 from LCApython import lca as lcap
-from LCAfortran import lca as lcaf
-from LCAcython import lca as lcac
+#from LCAfortran import lca as lcaf
+#from LCAcython import lca as lcac
 from LCAcythonv import lca as lcav
 #from LCAnumbaproc import lca as lcan
 from LCAnumbaprog import lca as lcag
@@ -14,9 +14,9 @@ def main():
     """Profiles various versions of LCA."""
 
     nshort = 6
-    tshort = 1
+    tshort = 2
     nmed = 3
-    tmed = 5
+    tmed = 6
     nlong = 1
     
     #Setup variables for inference
@@ -42,7 +42,6 @@ def main():
              nIter: """+str(nIter)+"""\n"""
     print params
              
-    """
     start = timer()
     lcap.infer(dictsIn,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt)
     dt = timer()-start
@@ -70,7 +69,6 @@ def main():
     print '---------------Python based LCA---------------'
     print 'Average time over '+str(num)+' trials:'
     print '%f s' % dt
-    """
 
     """
     start = timer()
