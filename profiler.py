@@ -7,11 +7,11 @@ from LCApython import lca as lcap
 from LCAfortran import lca as lcaf
 from LCAcython import lca as lcac
 from LCAcythonv import lca as lcav
-from LCAnumbaproc import lca as lcan
+#from LCAnumbaproc import lca as lcan
 from LCAnumbaprog import lca as lcag
 
 def main():
-    """Profiles functions related to the network."""
+    """Profiles various versions of LCA."""
 
     nshort = 6
     tshort = 1
@@ -20,19 +20,19 @@ def main():
     nlong = 1
     
     #Setup variables for inference
-    numDict = int(1600)
-    numBatch = int(256)
-    dataSize = int(8196)
-    dictsIn = np.random.uniform(size=(numDict,dataSize))
-    coeffs = np.random.uniform(size=(numBatch,numDict))
-    stimuli = np.random.uniform(size=(numBatch,dataSize))
-    batchCoeffs = np.random.uniform(size=(numBatch,numDict))
+    numDict = int(1024)
+    numBatch = int(128)
+    dataSize = int(256)
+    dictsIn = np.random.randn(numDict,dataSize)
+    coeffs = np.random.randn(numBatch,numDict)
+    stimuli = np.random.randn(numBatch,dataSize)
+    batchCoeffs = np.random.randn(numBatch,numDict)
     eta = .01
     lamb = .05
-    nIter = 100
+    nIter = 150
     softThresh = int(0)
     adapt = .99
-    thresh = np.random.uniform(size=numBatch)
+    thresh = np.random.randn(numBatch)
     
     #LCA
     params = """Parameters:
@@ -102,8 +102,6 @@ def main():
     print '%f s' % dt
     """
 
-
-    
     start = timer()
     lcav.infer(dictsIn,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt)
     dt = timer()-start
@@ -200,31 +198,27 @@ def main():
     """
 
 
-    #dictsIn = np.array(dictsIn,dtype)
-    #stimuli = np.array(stimuli,order='F')
-    #coeffs = np.array(coeffs,order='F')
-    
     start = timer()
-    lcag.lca(dictsIn,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt)
+    lcag.infer(dictsIn,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt)
     dt = timer()-start
     if dt < tshort:
         for ii in xrange(nshort-1):
             start = timer()
-            lcag.lca(dictsIn,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt)
+            lcag.infer(dictsIn,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt)
             dt = dt+timer()-start
         num = nshort
         dt = dt/(nshort)
     elif dt < tmed:
         for ii in xrange(nmed-1):
             start = timer()
-            lcag.lca(dictsIn,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt)
+            lcag.infer(dictsIn,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt)
             dt = dt+timer()-start
         num = nmed
         dt = dt/(nmed)
     else:
         for ii in xrange(nlong-1):
             start = timer()
-            lcag.lca(dictsIn,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt)
+            lcag.infer(dictsIn,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt)
             dt = dt+timer()-start
         num = nlong
         dt = dt/(nlong)
