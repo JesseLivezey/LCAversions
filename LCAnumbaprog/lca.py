@@ -37,22 +37,24 @@ def binit(dictionary,stimuli,b):
     for r in xrange(k):
         b[i,j] += stimuli[i,r]*dictionary[j,r]
 
-@cuda.jit('void(f4[:,:],f4[:,:],f4[:,:],f4[:,:],f4[:,:],f4,f4,f4,i4)')
-def iter(c,b,ci,u,s,eta,thresh,adapt,softThresh):
+@cuda.jit('void(f4[:,:],f4[:,:],f4[:,:],f4[:,:],f4[:,:],f4,f4[:],f4,f4,i4)')
+def iter(c,b,ci,u,s,eta,thresh,lamb,adapt,softThresh):
     n = u.shape[0]
     m = u.shape[1]
     i,j = cuda.grid(2)
     
     u[i,j] = eta*(b[i,j]-ci[i,j])+(1-eta)*u[i,j]
-    if u[i,j] < thresh and u[i,j] > -thresh:
+    if u[i,j] < thresh[i] and u[i,j] > -thresh[i]:
         s[i,j] = 0.
     elif softThresh == 1:
         if u[i,j] > 0.:
-            s[i,j] = u[i,j]-thresh
+            s[i,j] = u[i,j]-thresh[i]
         else:
-            s[i,j] = u[i,j]+thresh
+            s[i,j] = u[i,j]+thresh[i]
     else:
         s[i,j] = u[i,j]
+    if thresh[i] > lamb:
+        thresh[i] = thresh[i]*lamb
 
 def infer(dictionary,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt):
 #Get Blas routines
@@ -85,14 +87,13 @@ def infer(dictionary,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt):
     csub[griddimcsub,blockdim1](d_c)
     #binit[griddimb,blockdim2](d_dictionary,d_stimuli,d_b)
     bs.gemm('N','T',numStim,numDict,dataLength,1.,d_stimuli,d_dictionary,0.,d_b)
-    thresh = np.mean(np.absolute(d_b.copy_to_host()))
+    thresh = np.mean(np.absolute(d_b.copy_to_host()),axis=1)
+    d_thresh = cuda.to_device(thresh)
     #Update u[i] and s[i] for nIter time steps
     for kk in xrange(nIter):
         #Calculate ci: amount other neurons are stimulated times overlap with rest of basis
         bs.gemm('N','N',numStim,numDict,numDict,1.,d_s,d_c,0.,d_ci)
-        iter[griddimi,blockdim2](d_c,d_b,d_ci,d_u,d_s,eta,thresh,adapt,softThresh)
-        if thresh > lamb:
-            thresh = adapt*thresh
+        iter[griddimi,blockdim2](d_c,d_b,d_ci,d_u,d_s,eta,d_thresh,lamb,adapt,softThresh)
     u = d_u.copy_to_host()
     s = d_s.copy_to_host()
     return (s,u,thresh)

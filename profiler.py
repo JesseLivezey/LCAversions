@@ -30,7 +30,7 @@ def main():
     eta = .01
     lamb = .05
     nIter = 150
-    softThresh = int(0)
+    softThresh = int(1)
     adapt = .99
     thresh = np.random.randn(numBatch)
     

@@ -60,21 +60,25 @@ def infer(np.ndarray[DTYPE_t,ndim=2] basis,np.ndarray[DTYPE_t,ndim=2] coeffs,np.
             c[jj,ii] = c[ii,jj]
     #b[i,j] is the overlap from stimuli:i and basis:j
     b = np.dot(stimuli,basis.T)
-    thresh = np.mean(np.absolute(b))*thresh
+    thresh = np.mean(np.absolute(b),axis=1)
     #Update u[i,j] and s[i,j] for nIter time steps
     for kk in xrange(nIter):
         #Calculate ci: amount other neurons are stimulated (s) times overlap with rest of basis
         ci = np.dot(s,c)
         u = eta*(b-ci)+(1-eta)*u
-        for ii in xrange(nStimuli):
-            for jj in xrange(nBasis):
-                #s[ii,jj] = thresholdF(u[ii,jj],thresh[ii],softThresh)
-                if u[ii,jj] < thresh[ii] and u[ii,jj] > -thresh[ii]:
-                    s[ii,jj] = 0.
-                elif softThresh == 1:
-                    s[ii,jj] = u[ii,jj]-np.sign(u[ii,jj])*thresh[ii]
-                else:
-                    s[ii,jj] = u[ii,jj]
+        if softThresh == 1:
+            s = np.sign(u)*np.maximum(np.zeros_like(u),np.absolute(u)-np.tile(np.array([thresh]).T,(1,nBasis))) 
+        else:
+            s = np.sign(u)*(np.maximum(np.zeros_like(u),np.absolute(u)-thresh*np.ones_like(u))+np.array(np.greater(np.absolute(u),thresh*np.ones_like(u)),dtype=np.float64)*thresh) 
+        #for ii in xrange(nStimuli):
+        #    for jj in xrange(nBasis):
+        #        #s[ii,jj] = thresholdF(u[ii,jj],thresh[ii],softThresh)
+        #        if u[ii,jj] < thresh[ii] and u[ii,jj] > -thresh[ii]:
+        #            s[ii,jj] = 0.
+        #        elif softThresh == 1:
+        #            s[ii,jj] = u[ii,jj]-np.sign(u[ii,jj])*thresh[ii]
+        #        else:
+        #            s[ii,jj] = u[ii,jj]
         for ii in xrange(nStimuli):
             if thresh[ii] > lamb:
                 thresh[ii] = adapt*thresh[ii]

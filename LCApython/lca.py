@@ -16,17 +16,22 @@ def infer(basis,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt):
             c[jj,ii] = c[ii,jj]
     #b[i,j] is the overlap fromstimuli:i and basis:j
     b = np.dot(stimuli,basis.T)
-    thresh = np.mean(np.absolute(b))
+    thresh = np.mean(np.absolute(b),axis=1)
     #Update u[i] and s[i] for nIter time steps
     for kk in xrange(nIter):
         #Calculate ci: amount other neurons are stimulated times overlap with rest of basis
         ci = np.dot(s,c)
         u = eta*(b-ci)+(1-eta)*u
+        if softThresh == 1:
+            s = np.sign(u)*np.maximum(0,np.absolute(u)-np.tile(np.array([thresh]).T,(1,basis.shape[0]))) 
+        else:
+            s = np.sign(u)*(np.maximum(0.,np.absolute(u)-thresh)+np.greater(np.absolute(u),thresh).astype(np.float64)*thresh) 
+        #for ii in xrange(stimuli.shape[0]):
+        #    for jj in xrange(basis.shape[0]):
+        #        s[ii,jj] = thresholdF(u[ii,jj],thresh,softThresh)
         for ii in xrange(stimuli.shape[0]):
-            for jj in xrange(basis.shape[0]):
-                s[ii,jj] = thresholdF(u[ii,jj],thresh,softThresh)
-        if thresh > lamb:
-            thresh = adapt*thresh
+            if thresh[ii] > lamb:
+                thresh[ii] = adapt*thresh[ii]
     return (s,u,thresh)
 
 #Function to perform thresholding
