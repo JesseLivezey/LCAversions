@@ -1,4 +1,4 @@
-WARNING: Nothing here has been tested.
+WARNING: Only python, vectorized cython, and NumbaPro GPU code have any sort of testing.
 
 LCAversions
 ===========
@@ -24,3 +24,9 @@ The Fortran based version can be compiled using the command:
 f2py -c -m lca lca.f90
 ```
 in the fortran folder.
+
+To run tests, do:
+```
+nosetests
+```
+from the base directory.
