@@ -28,9 +28,8 @@ def binit(dictionary,stimuli,b):
     k = dictionary.shape[1]
     i,j = cuda.grid(2)
 
-    #if i >= 1 and i < n and j >= 1 and j < m:
     for r in xrange(k):
-        b[i,j] = b[i,j]+stimuli[i,r]*dictionary[j,r]
+        b[i,j] += stimuli[i,r]*dictionary[j,r]
 
 @cuda.jit('void(f4[:,:],f4[:,:],f4[:,:],f4[:,:],f4[:,:],f4,f4,f4,i4)')
 def iter(c,b,ci,u,s,eta,thresh,adapt,softThresh):
@@ -38,7 +37,6 @@ def iter(c,b,ci,u,s,eta,thresh,adapt,softThresh):
     m = u.shape[1]
     i,j = cuda.grid(2)
     
-    #if i >= 1 and i < n and j >= 1 and j < m:
     u[i,j] = eta*(b[i,j]-ci[i,j])+(1-eta)*u[i,j]
     if u[i,j] < thresh and u[i,j] > -thresh:
         s[i,j] = 0.
@@ -69,17 +67,19 @@ def infer(dictionary,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt):
     d_stimuli = cuda.to_device(stimuli)
 
     blockdim = (32,32)
-    griddim = (int(numStim/blockdim[0]),int(numDict/blockdim[1]))
+    griddimc = (int(numDict/blockdim[0]),int(numDict/blockdim[1]))
+    griddimb = (int(numStim/blockdim[0]),int(numDict/blockdim[1]))
+    griddimi = (int(numStim/blockdim[0]),int(numDict/blockdim[1]))
     
     #Calculate c: overlap of basis functions with each other minus identity
-    cinit[griddim,blockdim](d_dictionary,d_c)
-    binit[griddim,blockdim](d_dictionary,d_stimuli,d_b)
+    cinit[griddimc,blockdim](d_dictionary,d_c)
+    binit[griddimb,blockdim](d_dictionary,d_stimuli,d_b)
     thresh = np.mean(np.absolute(d_b.copy_to_host()))
     #Update u[i] and s[i] for nIter time steps
     for kk in xrange(nIter):
         #Calculate ci: amount other neurons are stimulated times overlap with rest of basis
         bs.gemm('N','N',numStim,numDict,numDict,1.,d_s,d_c,0.,d_ci)
-        iter[griddim,blockdim](d_c,d_b,d_ci,d_u,d_s,eta,thresh,adapt,softThresh)
+        iter[griddimi,blockdim](d_c,d_b,d_ci,d_u,d_s,eta,thresh,adapt,softThresh)
         if thresh > lamb:
             thresh = adapt*thresh
     u = d_u.copy_to_host()
