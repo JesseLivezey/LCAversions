@@ -66,7 +66,7 @@ def main():
             dt = dt+timer()-start
         num = nlong
         dt = dt/(nlong)
-    print '---------------Python based LCA---------------'
+    print '---------------Numpy based LCA----------------'
     print 'Average time over '+str(num)+' trials:'
     print '%f s' % dt
 
