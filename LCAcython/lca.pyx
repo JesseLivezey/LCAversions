@@ -43,25 +43,32 @@ def infer(np.ndarray[DTYPE_t,ndim=2] basis,np.ndarray[DTYPE_t,ndim=2] coeffs,np.
     
     assert basis.dtype == DTYPE and coeffs.dtype == DTYPE and stimuli.dtype == DTYPE
     cdef unsigned int ii,jj,kk
-    cdef double thresh
+    cdef unsigned int numDict,numStim,dataSize
+
+    numDict = basis.shape[0]
+    numStim = stimuli.shape[0]
+    dataSize = basis.shape[1]
+
     #Initialize u and s
+    cdef np.ndarray[DTYPE_t,ndim=1] thresh = np.zeros(numStim,dtype = DTYPE)
     cdef np.ndarray[DTYPE_t,ndim=2] u = np.array([coeffs[ii] for ii in xrange(stimuli.shape[0])], dtype = DTYPE)
     cdef np.ndarray[DTYPE_t,ndim=2] s = np.zeros((stimuli.shape[0],basis.shape[0]), dtype = DTYPE)
     cdef np.ndarray[DTYPE_t,ndim=2] b = np.zeros((stimuli.shape[0],basis.shape[0]), dtype = DTYPE)
     cdef np.ndarray[DTYPE_t,ndim=1] ci = np.zeros(basis.shape[0], dtype = DTYPE)
     cdef np.ndarray[DTYPE_t,ndim=2] c = np.zeros((basis.shape[0],basis.shape[0]), dtype = DTYPE)
 
+
     #Calculate c: overlap of basis functions with each other minus identity
     #Only calculate for elemets below the diagonal, then copies to above and leave diagonal at zero
-    for ii in xrange(basis.shape[0]):
+    for ii in xrange(numDict):
         for jj in xrange(ii):
             c[ii,jj] = np.dot(basis[ii],basis[jj])
             c[jj,ii] = c[ii,jj]
     #b[i,j] is the overlap from stimuli:i and basis:j
     b = np.dot(stimuli,basis.T)
     #Loop over stimuli
-    for ii in xrange(stimuli.shape[0]):
-        thresh = np.mean(np.absolute(b))
+    for ii in xrange(numStim):
+        thresh = np.mean(np.absolute(b),axis=1)
         #Update u[i] and s[i] for nIter time steps
         for kk in xrange(nIter):
             #Calculate ci: amount other neurons are stimulated (s) times overlap with rest of basis
@@ -70,10 +77,11 @@ def infer(np.ndarray[DTYPE_t,ndim=2] basis,np.ndarray[DTYPE_t,ndim=2] coeffs,np.
 	    #    ci[jj] = np.dot(c[jj,:,s[ii,:])
 	    #Running the u[i], s[i] updates as vector operations takes longer than the loop
             u[ii] = eta*(b[ii]-ci)+(1-eta)*u[ii]
-            for jj in xrange(basis.shape[0]):
+            for jj in xrange(numDict):
                 #u[ii,jj] = eta*(b[ii,jj]-ci[jj])+(1-eta)*u[ii,jj]
-                s[ii,jj] = thresholdF(u[ii,jj],thresh,softThresh)
-            if thresh > lamb:
-                thresh = adapt*thresh
+                s[ii,jj] = thresholdF(u[ii,jj],thresh[ii],softThresh)
+            for kk in xrange(numStim):
+                if thresh[kk] > lamb:
+                    thresh[kk] = adapt*thresh[kk]
     return (s,u,thresh)
 

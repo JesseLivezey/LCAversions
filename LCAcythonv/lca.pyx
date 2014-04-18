@@ -41,20 +41,20 @@ def infer(np.ndarray[DTYPE_t,ndim=2] basis,np.ndarray[DTYPE_t,ndim=2] coeffs,np.
     Raises:
     """
     
-    cdef unsigned int ii,jj,kk,numberS,numberB
-    nStimuli = stimuli.shape[0]
-    nBasis = basis.shape[0]
+    cdef unsigned int ii,jj,kk,numStim,numDict
+    numStim = stimuli.shape[0]
+    numDict = basis.shape[0]
     #Initialize u and s
     cdef np.ndarray[DTYPE_t,ndim=2] u = np.array([coeffs[ii] for ii in xrange(stimuli.shape[0])], dtype = DTYPE)
-    cdef np.ndarray[DTYPE_t,ndim=2] s = np.zeros((nStimuli,nBasis), dtype = DTYPE)
-    cdef np.ndarray[DTYPE_t,ndim=2] b = np.zeros((nStimuli,nBasis), dtype = DTYPE)
-    cdef np.ndarray[DTYPE_t,ndim=2] ci = np.zeros((nStimuli,nBasis), dtype = DTYPE)
-    cdef np.ndarray[DTYPE_t,ndim=2] c = np.zeros((nBasis,nBasis), dtype = DTYPE)
-    cdef np.ndarray[DTYPE_t,ndim=1] thresh = np.ones(nStimuli,dtype = DTYPE)
+    cdef np.ndarray[DTYPE_t,ndim=2] s = np.zeros((numStim,numDict), dtype = DTYPE)
+    cdef np.ndarray[DTYPE_t,ndim=2] b = np.zeros((numStim,numDict), dtype = DTYPE)
+    cdef np.ndarray[DTYPE_t,ndim=2] ci = np.zeros((numStim,numDict), dtype = DTYPE)
+    cdef np.ndarray[DTYPE_t,ndim=2] c = np.zeros((numDict,numDict), dtype = DTYPE)
+    cdef np.ndarray[DTYPE_t,ndim=1] thresh = np.ones(numStim,dtype = DTYPE)
 
     #Calculate c: overlap of basis functions with each other minus identity
     #Only calculate for elemets below the diagonal, then copies to above and leave diagonal at zero
-    for ii in xrange(nBasis):
+    for ii in xrange(numDict):
         for jj in xrange(ii):
             c[ii,jj] = np.dot(basis[ii],basis[jj])
             c[jj,ii] = c[ii,jj]
@@ -67,11 +67,11 @@ def infer(np.ndarray[DTYPE_t,ndim=2] basis,np.ndarray[DTYPE_t,ndim=2] coeffs,np.
         ci = np.dot(s,c)
         u = eta*(b-ci)+(1-eta)*u
         if softThresh == 1:
-            s = np.sign(u)*np.maximum(np.zeros_like(u),np.absolute(u)-np.tile(np.array([thresh]).T,(1,nBasis))) 
+            s = np.sign(u)*np.maximum(0.,np.absolute(u)-np.tile(np.array([thresh]).T,(1,numDict)))
         else:
-            s = np.sign(u)*(np.maximum(np.zeros_like(u),np.absolute(u)-thresh*np.ones_like(u))+np.array(np.greater(np.absolute(u),thresh*np.ones_like(u)),dtype=np.float64)*thresh) 
-        #for ii in xrange(nStimuli):
-        #    for jj in xrange(nBasis):
+            s = np.sign(u)*(np.maximum(0.,np.absolute(u)-np.tile(np.array([thresh]).T,(1,numDict)))+np.greater(np.absolute(u),np.tile(np.array([thresh]).T,(1,numDict))).astype(np.float64)*np.tile(np.array([thresh]).T,(1,numDict)))
+        #for ii in xrange(numStim):
+        #    for jj in xrange(numDict):
         #        #s[ii,jj] = thresholdF(u[ii,jj],thresh[ii],softThresh)
         #        if u[ii,jj] < thresh[ii] and u[ii,jj] > -thresh[ii]:
         #            s[ii,jj] = 0.
@@ -79,7 +79,7 @@ def infer(np.ndarray[DTYPE_t,ndim=2] basis,np.ndarray[DTYPE_t,ndim=2] coeffs,np.
         #            s[ii,jj] = u[ii,jj]-np.sign(u[ii,jj])*thresh[ii]
         #        else:
         #            s[ii,jj] = u[ii,jj]
-        for ii in xrange(nStimuli):
+        for ii in xrange(numStim):
             if thresh[ii] > lamb:
                 thresh[ii] = adapt*thresh[ii]
     return (s,u,thresh)

@@ -3,7 +3,7 @@ from __future__ import division
 import numpy as np
 from timeit import default_timer as timer
 
-from LCApython import lca as lcap
+from LCAnumpy import lca as lcan
 #from LCAfortran import lca as lcaf
 #from LCAcython import lca as lcac
 from LCAcythonv import lca as lcav
@@ -43,26 +43,26 @@ def main():
     print params
              
     start = timer()
-    lcap.infer(dictsIn,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt)
+    lcan.infer(dictsIn,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt)
     dt = timer()-start
     if dt < tshort:
         for ii in xrange(nshort-1):
             start = timer()
-            lcap.infer(dictsIn,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt)
+            lcan.infer(dictsIn,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt)
             dt = dt+timer()-start
         num = nshort
         dt = dt/(nshort)
     elif dt < tmed:
         for ii in xrange(nmed-1):
             start = timer()
-            lcap.infer(dictsIn,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt)
+            lcan.infer(dictsIn,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt)
             dt = dt+timer()-start
         num = nmed
         dt = dt/(nmed)
     else:
         for ii in xrange(nlong-1):
             start = timer()
-            lcap.infer(dictsIn,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt)
+            lcan.infer(dictsIn,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt)
             dt = dt+timer()-start
         num = nlong
         dt = dt/(nlong)

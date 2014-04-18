@@ -1,7 +1,7 @@
 from __future__ import print_function
 import numpy as np
 
-from LCApython import lca as lcap
+from LCAnumpy import lca as lcan
 from LCAcythonv import lca as lcav
 from LCAnumbaprog import lca as lcag
 
@@ -14,36 +14,72 @@ def teardown_module():
 class test_infer():
 
     def setup(self):
+        self.rng = np.random.RandomState(0)
         self.num = 64
-        self.nIter = 300
-        self.dictionary = np.diag(np.ones(self.num))
-        self.coeffs = np.zeros(shape=(self.num,self.num))
-        self.stimuli = np.diag(np.ones(self.num))
-        self.eta = .1
-        self.lamb = .5
+        self.numDict = 1024
+        self.numStim = 64
+        self.dataSize = 132
+        self.nIter = 500
+        self.eta = .05
+        self.lamb = .1
         self.softThresh = int(0)
-        self.adapt = .99
+        self.adapt = .1
 
     def teardown(self):
         pass
 
     def test_cythonv(self):
-        self.s,self.u,self.thresh = lcav.infer(self.dictionary,self.coeffs,self.stimuli,self.eta,self.lamb,self.nIter,self.softThresh,self.adapt)
-        assert np.allclose(self.s,np.diag(np.ones(self.num)))
-        assert np.allclose(self.u,np.diag(np.ones(self.num)))
-
+        coeffs = np.zeros(shape=(self.num,self.num))
+        #Test for correct outputs for simple data
+        dictionary = np.diag(np.ones(self.num))
+        stimuli = np.diag(np.ones(self.num))
+        s,u,thresh = lcav.infer(dictionary,coeffs,stimuli,self.eta,self.lamb,self.nIter,self.softThresh,self.adapt)
+        assert np.allclose(s,np.diag(np.ones(self.num)))
+        assert np.allclose(u,np.diag(np.ones(self.num)))
+        #Test on random data
+        dictionary = self.rng.randn(self.numDict,self.dataSize)
+        dictionary = np.sqrt(np.diag(1/np.diag(dictionary.dot(dictionary.T)))).dot(dictionary)
+        stimuli = self.rng.randn(self.numStim,self.dataSize)
+        coeffs = np.zeros(shape=(self.numStim,self.numDict))
+        s,u,thresh = lcav.infer(dictionary,coeffs,stimuli,self.eta,self.lamb,self.nIter,self.softThresh,self.adapt)
+        assert np.allclose(stimuli,s.dot(dictionary),atol=1e-5)
 
     def test_numbaprog(self):
-        self.dictionary = np.array(np.diag(np.ones(self.num)),dtype=np.float32,order='F')
-        self.coeffs = np.array(np.diag(np.zeros(self.num)),dtype=np.float32,order='F')
-        self.stimuli = np.array(np.diag(np.ones(self.num)),dtype=np.float32,order='F')
-        
-        self.s,self.u,self.thresh = lcag.infer(self.dictionary,self.coeffs,self.stimuli,self.eta,self.lamb,self.nIter,self.softThresh,self.adapt)
-        assert np.allclose(self.s,np.diag(np.ones(self.num)))
-        assert np.allclose(self.u,np.diag(np.ones(self.num)))
-        
+        coeffs = np.zeros(shape=(self.num,self.num))
+        #Test for correct outputs for simple data
+        dictionary = np.diag(np.ones(self.num))
+        stimuli = np.diag(np.ones(self.num))
+        #Change dtype and enforce Fortran ordering
+        dictionary = np.array(dictionary,dtype=np.float32,order='F')
+        coeffs = np.array(coeffs,dtype=np.float32,order='F')
+        stimuli = np.array(stimuli,dtype=np.float32,order='F')
+        s,u,thresh = lcag.infer(dictionary,coeffs,stimuli,self.eta,self.lamb,self.nIter,self.softThresh,self.adapt)
+        assert np.allclose(s,np.diag(np.ones(self.num)))
+        assert np.allclose(u,np.diag(np.ones(self.num)))
+        #Test on random data
+        dictionary = self.rng.randn(self.numDict,self.dataSize)
+        dictionary = np.sqrt(np.diag(1/np.diag(dictionary.dot(dictionary.T)))).dot(dictionary)
+        stimuli = self.rng.randn(self.numStim,self.dataSize)
+        coeffs = np.zeros(shape=(self.numStim,self.numDict))
+        #Change dtype and enforce Fortran ordering
+        dictionary = np.array(dictionary,dtype=np.float32,order='F')
+        coeffs = np.array(coeffs,dtype=np.float32,order='F')
+        stimuli = np.array(stimuli,dtype=np.float32,order='F')
+        s,u,thresh = lcag.infer(dictionary,coeffs,stimuli,self.eta,self.lamb,self.nIter,self.softThresh,self.adapt)
+        assert np.allclose(stimuli,s.dot(dictionary),atol=1e-5)
 
-    def test_python(self):
-        self.s,self.u,self.thresh = lcap.infer(self.dictionary,self.coeffs,self.stimuli,self.eta,self.lamb,self.nIter,self.softThresh,self.adapt)
-        assert np.allclose(self.s,np.diag(np.ones(self.num)))
-        assert np.allclose(self.u,np.diag(np.ones(self.num)))
+    def test_numpy(self):
+        coeffs = np.zeros(shape=(self.num,self.num))
+        #Test for correct outputs for simple data
+        dictionary = np.diag(np.ones(self.num))
+        stimuli = np.diag(np.ones(self.num))
+        s,u,thresh = lcan.infer(dictionary,coeffs,stimuli,self.eta,self.lamb,self.nIter,self.softThresh,self.adapt)
+        assert np.allclose(s,np.diag(np.ones(self.num)))
+        assert np.allclose(u,np.diag(np.ones(self.num)))
+        #Test on random data
+        dictionary = self.rng.randn(self.numDict,self.dataSize)
+        dictionary = np.sqrt(np.diag(1/np.diag(dictionary.dot(dictionary.T)))).dot(dictionary)
+        stimuli = self.rng.randn(self.numStim,self.dataSize)
+        coeffs = np.zeros(shape=(self.numStim,self.numDict))
+        s,u,thresh = lcan.infer(dictionary,coeffs,stimuli,self.eta,self.lamb,self.nIter,self.softThresh,self.adapt)
+        assert np.allclose(stimuli,s.dot(dictionary),atol=1e-5)

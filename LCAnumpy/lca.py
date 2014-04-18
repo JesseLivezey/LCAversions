@@ -2,15 +2,18 @@ import numpy as np
 
 #Initialize settings for inference
 def infer(basis,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt):
+    numDict = basis.shape[0]
+    numStim = stimuli.shape[0]
+    dataSize = basis.shape[1]
     #Initialize u and s
-    u = np.array([coeffs[ii] for ii in xrange(stimuli.shape[0])])
-    s = np.zeros((stimuli.shape[0],basis.shape[0]))
-    b = np.zeros((stimuli.shape[0],basis.shape[0]))
-    ci = np.zeros((stimuli.shape[0],basis.shape[0]))
-    c = np.zeros((basis.shape[0],basis.shape[0]))
+    u = np.array([coeffs[ii] for ii in xrange(numStim)])
+    s = np.zeros((numStim,numDict))
+    b = np.zeros((numStim,numDict))
+    ci = np.zeros((numStim,numDict))
+    c = np.zeros((numDict,numDict))
     #Calculate c: overlap of basis functions with each other minus identity
     #should use symmetry to cut back on time, probably not important
-    for ii in xrange(basis.shape[0]):
+    for ii in xrange(numDict):
         for jj in xrange(ii):
             c[ii,jj] = np.dot(basis[ii],basis[jj])
             c[jj,ii] = c[ii,jj]
@@ -23,13 +26,13 @@ def infer(basis,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt):
         ci = np.dot(s,c)
         u = eta*(b-ci)+(1-eta)*u
         if softThresh == 1:
-            s = np.sign(u)*np.maximum(0,np.absolute(u)-np.tile(np.array([thresh]).T,(1,basis.shape[0]))) 
+            s = np.sign(u)*np.maximum(0.,np.absolute(u)-np.tile(np.array([thresh]).T,(1,numDict))) 
         else:
-            s = np.sign(u)*(np.maximum(0.,np.absolute(u)-thresh)+np.greater(np.absolute(u),thresh).astype(np.float64)*thresh) 
+            s = np.sign(u)*(np.maximum(0.,np.absolute(u)-np.tile(np.array([thresh]).T,(1,numDict)))+np.greater(np.absolute(u),np.tile(np.array([thresh]).T,(1,numDict))).astype(np.float64)*np.tile(np.array([thresh]).T,(1,numDict)))
         #for ii in xrange(stimuli.shape[0]):
         #    for jj in xrange(basis.shape[0]):
         #        s[ii,jj] = thresholdF(u[ii,jj],thresh,softThresh)
-        for ii in xrange(stimuli.shape[0]):
+        for ii in xrange(numStim):
             if thresh[ii] > lamb:
                 thresh[ii] = adapt*thresh[ii]
     return (s,u,thresh)
