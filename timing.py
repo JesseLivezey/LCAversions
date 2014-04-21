@@ -122,6 +122,9 @@ def main():
     print '%f s' % dt
     """
 
+    dictsIn = np.array(dictsIn,dtype=np.float32,order='F')
+    stimuli = np.array(stimuli,dtype=np.float32,order='F')
+    coeffs = np.array(coeffs,dtype=np.float32,order='F')
     start = timer()
     lcag.infer(dictsIn,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt)
     dt = timer()-start
