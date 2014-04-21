@@ -21,31 +21,29 @@ subroutine lca(basis, stimuli, eta, lamb, nIter, softThresh, adapt, s, u, thresh
   real(dp), intent(inout), dimension(0:nStimuli-1) :: thresh
   !f2py intent(inout) :: thresh
 
-  real(dp), dimension(0:nStimuli-1, 0:nBasis-1) :: b
-  real(dp), dimension(0:nStimuli-1,0:nBasis-1) :: ci
+  real(dp), dimension(0:nStimuli-1, 0:nBasis-1) :: b, ci
   real(dp), dimension(0:nBasis-1,0:nBasis-1) :: c
   integer(li) :: ii,jj,kk
 
-  external :: DGEMM
+  external :: DGEMM, DSYMM
   real(dp), external :: threshF
   real(dp), external :: DDOT
 
-
+  call DGEMM("n","t",nBasis,nBasis,length,alpha,basis,nBasis,basis,nBasis,beta,c,nBasis)
   do ii=0,nbasis-1
      c(ii,ii) = 0.0
-     do jj=0,ii-1
-        c(ii,jj) = DDOT(length,basis(ii,:),1,basis(jj,:),1)
+     !do jj=0,ii-1
+     !   c(ii,jj) = DDOT(length,basis(ii,:),1,basis(jj,:),1)
         !c(jj,ii) = c(ii,jj)
-     end do
+     !end do
   end do
   call DGEMM("n","t",nStimuli,nBasis,length,alpha,stimuli,nStimuli,basis,nBasis,beta,b,nStimuli)
   thresh = thresh*SUM(ABS(b))/SIZE(b)
   do jj=0,nIter-1
-     call DSYMM("r","l",nStimuli,nBasis,alpha,c,nBasis,stimuli,nStimuli,beta,ci,nStimuli)
+     call DSYMM("r","l",nStimuli,nBasis,alpha,c,nBasis,s,nStimuli,beta,ci,nStimuli)
      u = eta*(b-ci)+(1-eta)*u
      do kk=0,nBasis-1
         do ii=0,nStimuli-1
-           !s(ii,kk) = threshF(u(ii,kk),thresh(ii),softThresh)
            if ((u(ii,kk) < thresh(ii)) .and. (u(ii,kk) > -thresh(ii))) then
               s(ii,kk) = 0.
            else if (softThresh .eq. 1) then

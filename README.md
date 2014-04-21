@@ -1,5 +1,3 @@
-WARNING: Only python, vectorized cython, and NumbaPro GPU code have any sort of testing.
-
 LCAversions
 ===========
 
