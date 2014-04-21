@@ -19,7 +19,7 @@ class test_infer():
         self.num = 64
         self.numDict = 1024
         self.numStim = 64
-        self.dataSize = 132
+        self.dataSize = 128
         self.nIter = 500
         self.eta = .05
         self.lamb = .1
