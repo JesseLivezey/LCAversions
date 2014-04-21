@@ -14,13 +14,13 @@ Cython based version can be compiled using the command:
 ```
 python setup.py build_ext --inplace
 ```
-in the individual folders.
+in the LCAcythonv folder.
 
 The Fortran based version can be compiled using the command:
 ```
 f2py -c -m lca lca.f90
 ```
-in the fortran folder.
+in the LCAfortran folder.
 
 To run tests, do:
 ```
