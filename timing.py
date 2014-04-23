@@ -19,7 +19,7 @@ def main():
     nlong = 1
     
     #Setup variables for inference
-    numDict = int(1024)
+    numDict = int(4096)
     numBatch = int(128)
     dataSize = int(256)
     dictsIn = np.random.randn(numDict,dataSize)
