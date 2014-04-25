@@ -1,6 +1,7 @@
 #This file will time various versions of LCA
 from __future__ import division
 import numpy as np
+import sklearn.preprocessing as skp
 from timeit import default_timer as timer
 
 from LCAnumpy import lca as lcan
@@ -23,6 +24,8 @@ def main():
     numBatch = int(128)
     dataSize = int(256)
     dictsIn = np.random.randn(numDict,dataSize)
+    # LCA requires that dictionary be unit norm
+    dictsIn = skp.normalize(dictsIn, axis=1)
     coeffs = np.random.randn(numBatch,numDict)
     stimuli = np.random.randn(numBatch,dataSize)
     batchCoeffs = np.random.randn(numBatch,numDict)
