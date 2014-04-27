@@ -36,13 +36,17 @@ def infer(basis,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt):
     s = np.zeros((numStim,numDict))
     b = np.zeros((numStim,numDict))
     ci = np.zeros((numStim,numDict))
-    c = np.zeros((numDict,numDict))
+    # Calculate c: overlap of basis functions with each other minus identity
+    c = np.dot(basis, basis.T) - np.eye(numDict)
+
+    # c = np.zeros((numDict,numDict))
     #Calculate c: overlap of basis functions with each other minus identity
     #should use symmetry to cut back on time, probably not important
-    for ii in xrange(numDict):
-        for jj in xrange(ii):
-            c[ii,jj] = np.dot(basis[ii],basis[jj])
-            c[jj,ii] = c[ii,jj]
+    # for ii in xrange(numDict):
+    #    for jj in xrange(ii):
+    #        c[ii,jj] = np.dot(basis[ii],basis[jj])
+    #        c[jj,ii] = c[ii,jj]
+
     #b[i,j] is the overlap fromstimuli:i and basis:j
     b = np.dot(stimuli,basis.T)
     thresh = np.mean(np.absolute(b),axis=1)
