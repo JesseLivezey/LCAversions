@@ -41,10 +41,7 @@ def infer(np.ndarray[DTYPE_t,ndim=2] basis,np.ndarray[DTYPE_t,ndim=2] coeffs,np.
 
     #Calculate c: overlap of basis functions with each other minus identity
     #Only calculate for elemets below the diagonal, then copies to above and leave diagonal at zero
-    for ii in xrange(numDict):
-        for jj in xrange(ii):
-            c[ii,jj] = np.dot(basis[ii],basis[jj])
-            c[jj,ii] = c[ii,jj]
+    c = np.dot(basis,basis.T)-np.eye(numDict)
     #b[i,j] is the overlap from stimuli:i and basis:j
     b = np.dot(stimuli,basis.T)
     thresh = np.mean(np.absolute(b),axis=1)
