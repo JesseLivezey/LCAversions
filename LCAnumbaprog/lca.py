@@ -38,7 +38,7 @@ def binit(dictionary,stimuli,b):
         b[i,j] += stimuli[i,r]*dictionary[j,r]
 
 @cuda.jit('void(f4[:,:],f4[:,:],f4[:,:],f4[:,:],f4[:,:],f4,f4[:],f4,f4,i4)')
-def iter(c,b,ci,u,s,eta,thresh,lamb,adapt,softThresh):
+def iterate(c,b,ci,u,s,eta,thresh,lamb,adapt,softThresh):
     n = u.shape[0]
     m = u.shape[1]
     i,j = cuda.grid(2)
@@ -93,7 +93,7 @@ def infer(dictionary,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt):
     for kk in xrange(nIter):
         #Calculate ci: amount other neurons are stimulated times overlap with rest of basis
         bs.gemm('N','N',numStim,numDict,numDict,1.,d_s,d_c,0.,d_ci)
-        iter[griddimi,blockdim2](d_c,d_b,d_ci,d_u,d_s,eta,d_thresh,lamb,adapt,softThresh)
+        iterate[griddimi,blockdim2](d_c,d_b,d_ci,d_u,d_s,eta,d_thresh,lamb,adapt,softThresh)
     u = d_u.copy_to_host()
     s = d_s.copy_to_host()
     return (s,u,thresh)

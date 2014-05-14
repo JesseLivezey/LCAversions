@@ -1,10 +1,10 @@
 from __future__ import print_function
 import numpy as np
 
-from LCAnumpy import lca as lcan
-from LCAcythonv import lca as lcav
-from LCAnumbaprog import lca as lcag
-from LCAfortran import lca as lcaf
+from LCAversions.LCAnumpy import lca as lcan
+from LCAversions.LCAcythonv import lca as lcav
+from LCAversions.LCAnumbaprog import lca as lcag
+from LCAversions.LCAfortran import lca as lcaf
 
 def setup__module():
     pass
@@ -22,7 +22,7 @@ class test_infer():
         self.dataSize = 128
         self.nIter = 500
         self.eta = .05
-        self.lamb = .1
+        self.lamb = .05
         self.softThresh = int(0)
         self.adapt = .1
 

@@ -31,7 +31,7 @@ def main():
     batchCoeffs = np.random.randn(numBatch,numDict)
     eta = .01
     lamb = .05
-    nIter = 150
+    nIter = 300
     softThresh = int(1)
     adapt = .99
     thresh = np.random.randn(numBatch)
