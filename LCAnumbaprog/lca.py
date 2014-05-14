@@ -2,6 +2,7 @@ import numpy as np
 from numbapro import cuda
 import numbapro.cudalib.cublas as cublas
 from numba import *
+from math import ceil
 
 @cuda.jit('void(f4[:,:],f4[:,:])')
 def uinit(u,coeffs):
@@ -9,23 +10,26 @@ def uinit(u,coeffs):
     m = u.shape[1]
     i,j = cuda.grid(2)
     
-    u[i,j] = coeffs[i,j]
+    if i < n and j < m:
+        u[i,j] = coeffs[i,j]
 
 @cuda.jit('void(f4[:,:],f4[:,:])')
 def cinit(dictionary,c):
-    n = dictionary.shape[0]
-    m = dictionary.shape[1]
+    n = c.shape[0]
+    m = c.shape[1]
     i,j = cuda.grid(2)
     
-    if (i != j):
+    if (i != j) and i < n and j < m:
         for k in xrange(m):
             c[i,j] += dictionary[i,k]*dictionary[j,k]
 
 @cuda.jit('void(f4[:,:])')
 def csub(c):
+    n = c.shape[0]
     i = cuda.grid(1)
     
-    c[i,i] = 0.
+    if i < n:
+        c[i,i] = 0.
 
 @cuda.jit('void(f4[:,:],f4[:,:],f4[:,:])')
 def binit(dictionary,stimuli,b):
@@ -34,8 +38,9 @@ def binit(dictionary,stimuli,b):
     k = dictionary.shape[1]
     i,j = cuda.grid(2)
 
-    for r in xrange(k):
-        b[i,j] += stimuli[i,r]*dictionary[j,r]
+    if i < n and j < m:
+        for r in xrange(k):
+            b[i,j] += stimuli[i,r]*dictionary[j,r]
 
 @cuda.jit('void(f4[:,:],f4[:,:],f4[:,:],f4[:,:],f4[:,:],f4,f4[:],f4,f4,i4)')
 def iterate(c,b,ci,u,s,eta,thresh,lamb,adapt,softThresh):
@@ -43,18 +48,19 @@ def iterate(c,b,ci,u,s,eta,thresh,lamb,adapt,softThresh):
     m = u.shape[1]
     i,j = cuda.grid(2)
     
-    u[i,j] = eta*(b[i,j]-ci[i,j])+(1-eta)*u[i,j]
-    if u[i,j] < thresh[i] and u[i,j] > -thresh[i]:
-        s[i,j] = 0.
-    elif softThresh == 1:
-        if u[i,j] > 0.:
-            s[i,j] = u[i,j]-thresh[i]
+    if i < n and j < m:
+        u[i,j] = eta*(b[i,j]-ci[i,j])+(1-eta)*u[i,j]
+        if u[i,j] < thresh[i] and u[i,j] > -thresh[i]:
+            s[i,j] = 0.
+        elif softThresh == 1:
+            if u[i,j] > 0.:
+                s[i,j] = u[i,j]-thresh[i]
+            else:
+                s[i,j] = u[i,j]+thresh[i]
         else:
-            s[i,j] = u[i,j]+thresh[i]
-    else:
-        s[i,j] = u[i,j]
-    if thresh[i] > lamb:
-        thresh[i] = thresh[i]*lamb
+            s[i,j] = u[i,j]
+        if thresh[i] > lamb:
+         thresh[i] = thresh[i]*lamb
 
 def infer(dictionary,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt):
 #Get Blas routines
@@ -77,9 +83,9 @@ def infer(dictionary,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt):
     blockdim2 = (32,32)
     blockdim1 = 32
     #griddimc = (int(numDict/blockdim[0]),int(numDict/blockdim[1]))
-    griddimcsub = int(numDict/blockdim1)
-    griddimb = (int(numStim/blockdim2[0]),int(numDict/blockdim2[1]))
-    griddimi = (int(numStim/blockdim2[0]),int(numDict/blockdim2[1]))
+    griddimcsub = int(ceil(numDict/blockdim1))
+    griddimb = (int(ceil(numStim/blockdim2[0])),int(ceil(numDict/blockdim2[1])))
+    griddimi = (int(ceil(numStim/blockdim2[0])),int(ceil(numDict/blockdim2[1])))
     
     #Calculate c: overlap of basis functions with each other minus identity
     #cinit[griddimc,blockdim](d_dictionary,d_c)
