@@ -33,33 +33,24 @@ def infer(basis,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt):
     dataSize = basis.shape[1]
     #Initialize u and s
     u = np.array([coeffs[ii] for ii in xrange(numStim)])
-    s = np.zeros((numStim,numDict))
-    b = np.zeros((numStim,numDict))
-    ci = np.zeros((numStim,numDict))
-    # Calculate c: overlap of basis functions with each other minus identity
-    c = np.dot(basis, basis.T) - np.eye(numDict)
+    s = np.zeros_like(u)
 
-    # c = np.zeros((numDict,numDict))
-    #Calculate c: overlap of basis functions with each other minus identity
-    #should use symmetry to cut back on time, probably not important
-    # for ii in xrange(numDict):
-    #    for jj in xrange(ii):
-    #        c[ii,jj] = np.dot(basis[ii],basis[jj])
-    #        c[jj,ii] = c[ii,jj]
+    # Calculate c: overlap of basis functions with each other minus identity
+    c = basis.dot(basis.T) - np.eye(numDict)
 
     #b[i,j] is the overlap fromstimuli:i and basis:j
-    b = np.dot(stimuli,basis.T)
-    thresh = np.mean(np.absolute(b),axis=1)
+    b = stimuli.dot(basis.T)
+    thresh = np.absolute(b).mean(1)
     #Update u[i] and s[i] for nIter time steps
     for kk in xrange(nIter):
         #Calculate ci: amount other neurons are stimulated times overlap with rest of basis
-        ci = np.dot(s,c)
+        ci = s.dot(c)
         u = eta*(b-ci)+(1-eta)*u
         if softThresh == 1:
-            s = np.sign(u)*np.maximum(0.,np.absolute(u)-np.tile(np.array([thresh]).T,(1,numDict))) 
+            s = np.sign(u)*np.maximum(0.,np.absolute(u)-thresh[:,np.newaxis]) 
         else:
-            s = np.sign(u)*(np.maximum(0.,np.absolute(u)-np.tile(np.array([thresh]).T,(1,numDict)))+np.greater(np.absolute(u),np.tile(np.array([thresh]).T,(1,numDict))).astype(np.float64)*np.tile(np.array([thresh]).T,(1,numDict)))
-        for ii in xrange(numStim):
-            if thresh[ii] > lamb:
-                thresh[ii] = adapt*thresh[ii]
+            s = np.sign(u)*(np.maximum(0.,np.absolute(u)-thresh[:,np.newaxis])
+                +np.greater(np.absolute(u),thresh[:,np.newaxis]).astype(np.float64)
+                *thresh[:,np.newaxis])
+        thresh[thresh>lamb] = adapt*thresh[thresh>lamb]
     return (s,u,thresh)
