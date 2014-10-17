@@ -34,6 +34,7 @@ def infer(basis,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt):
     #Initialize u and s
     u = np.array([coeffs[ii] for ii in xrange(numStim)])
     s = np.zeros_like(u)
+    ci = np.zeros((numStim, numDict))
 
     # Calculate c: overlap of basis functions with each other minus identity
     c = basis.dot(basis.T) - np.eye(numDict)
@@ -44,12 +45,12 @@ def infer(basis,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt):
     #Update u[i] and s[i] for nIter time steps
     for kk in xrange(nIter):
         #Calculate ci: amount other neurons are stimulated times overlap with rest of basis
-        ci = s.dot(c)
-        u = eta*(b-ci)+(1-eta)*u
+        ci[:] = s.dot(c)
+        u[:] = eta*(b-ci)+(1-eta)*u
         if softThresh == 1:
-            s = np.sign(u)*np.maximum(0.,np.absolute(u)-thresh[:,np.newaxis]) 
+            s[:] = np.sign(u)*np.maximum(0.,np.absolute(u)-thresh[:,np.newaxis]) 
         else:
-            s = np.sign(u)*(np.maximum(0.,np.absolute(u)-thresh[:,np.newaxis])
+            s[:] = np.sign(u)*(np.maximum(0.,np.absolute(u)-thresh[:,np.newaxis])
                 +np.greater(np.absolute(u),thresh[:,np.newaxis]).astype(np.float64)
                 *thresh[:,np.newaxis])
         thresh[thresh>lamb] = adapt*thresh[thresh>lamb]

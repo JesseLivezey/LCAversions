@@ -26,7 +26,6 @@ subroutine lca(basis, stimuli, eta, lamb, nIter, softThresh, adapt, s, u, thresh
   integer(li) :: ii,jj,kk
 
   external :: DGEMM, DSYMM
-  real(dp), external :: threshF
   real(dp), external :: DDOT
 
   call DGEMM("n","t",nBasis,nBasis,length,alpha,basis,nBasis,basis,nBasis,beta,c,nBasis)
@@ -61,20 +60,3 @@ subroutine lca(basis, stimuli, eta, lamb, nIter, softThresh, adapt, s, u, thresh
   end do
 end subroutine
 
-real(KIND(1.0d0)) function threshF(u,thresh,softThresh)
-  implicit none
-  integer, parameter :: dp = kind(1.0d0)
-  integer, parameter :: li = SELECTED_INT_KIND(8)
-  integer(li), intent(in) :: softThresh
-  real(dp), intent(in) :: u
-  real(dp), intent(in) :: thresh
-
-  if ((u < thresh) .and. (u > -thresh)) then
-     threshF = 0.
-  else if (softThresh .eq. 1) then
-     threshF = u-sign(u,u)*thresh
-  else
-     threshF = u
-  end if
-  return
-end function
