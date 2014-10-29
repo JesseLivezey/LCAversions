@@ -50,14 +50,13 @@ def infer(np.ndarray[DTYPE_t,ndim=2] basis,np.ndarray[DTYPE_t,ndim=2] coeffs,np.
         #Calculate ci: amount other neurons are stimulated (s) times overlap with rest of basis
         ci = np.dot(s,c)
         #Update pre-threshold variables
-        u = eta*(b-ci)+(1-eta)*u
+        u[:] = eta*(b-ci)+(1-eta)*u
         #Threshold
         if softThresh == 1:
-            s = np.sign(u)*np.maximum(0.,np.absolute(u)-np.tile(np.array([thresh]).T,(1,numDict)))
+            s[:] = np.sign(u)*np.maximum(0.,np.absolute(u)-thresh[:,np.newaxis])
         else:
-            s = np.sign(u)*(np.maximum(0.,np.absolute(u)-np.tile(np.array([thresh]).T,(1,numDict)))+np.greater(np.absolute(u),np.tile(np.array([thresh]).T,(1,numDict))).astype(np.float64)*np.tile(np.array([thresh]).T,(1,numDict)))
-        for ii in xrange(numStim):
-            if thresh[ii] > lamb:
-                thresh[ii] = adapt*thresh[ii]
+            s[:] = u
+            s[np.absolute(s) < thresh[:,np.newaxis]] = 0.
+        thresh[thresh > lamb] = adapt*thresh[thresh > lamb]
     return (s,u,thresh)
 

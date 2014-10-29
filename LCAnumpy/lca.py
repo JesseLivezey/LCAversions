@@ -50,8 +50,7 @@ def infer(basis,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt):
         if softThresh == 1:
             s[:] = np.sign(u)*np.maximum(0.,np.absolute(u)-thresh[:,np.newaxis]) 
         else:
-            s[:] = np.sign(u)*(np.maximum(0.,np.absolute(u)-thresh[:,np.newaxis])
-                +np.greater(np.absolute(u),thresh[:,np.newaxis]).astype(np.float64)
-                *thresh[:,np.newaxis])
+            s[:] = u
+            s[np.absolute(s) < thresh[:,np.newaxis]] = 0.
         thresh[thresh>lamb] = adapt*thresh[thresh>lamb]
     return (s,u,thresh)

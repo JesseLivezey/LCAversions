@@ -7,7 +7,7 @@
 import numpy as np
 
 #Initialize settings for inference
-def infer(basis,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt):
+def infer(basis,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt,rho=.5):
     """Infers sparse coefficients for dictionary elements when representing a stimulus using LCA algorithm.
 
         Args:
@@ -46,13 +46,12 @@ def infer(basis,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt):
     for kk in xrange(nIter):
         #Calculate ci: amount other neurons are stimulated times overlap with rest of basis
         ci = s.dot(c)
-        u_v = .9*u_v+eta*(b-ci)-eta*u
+        u_v[:] = rho*u_v+eta*(b-ci)-eta*u
         u += u_v
         if softThresh == 1:
-            s = np.sign(u)*np.maximum(0.,np.absolute(u)-thresh[:,np.newaxis]) 
+            s[:] = np.sign(u)*np.maximum(0.,np.absolute(u)-thresh[:,np.newaxis]) 
         else:
-            s = np.sign(u)*(np.maximum(0.,np.absolute(u)-thresh[:,np.newaxis])
-                +np.greater(np.absolute(u),thresh[:,np.newaxis]).astype(np.float64)
-                *thresh[:,np.newaxis])
+            s[:] = u
+            s[np.absolute(s) < thresh[:,np.newaxis]] = 0.
         thresh[thresh>lamb] = adapt*thresh[thresh>lamb]
     return (s,u,thresh)
