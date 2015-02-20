@@ -2,9 +2,9 @@ from __future__ import print_function
 import numpy as np
 
 from LCAversions.LCAnumpy import lca as lcan
-from LCAversions.LCAcythonv import lca as lcav
 from LCAversions.LCAnumbaprog import lca as lcag
 from LCAversions.LCAfortran import lca as lcaf
+from LCAversions.LCAmomentum import lca as lcam
 
 class test_infer():
 
@@ -100,6 +100,31 @@ class test_infer():
         stimuli = self.rng.randn(self.numStim,self.dataSize)
         coeffs = np.zeros(shape=(self.numStim,self.numDict))
         s,u,thresh = lcan.infer(dictionary,
+                                stimuli,
+                                self.eta,
+                                self.lamb,
+                                self.nIter,
+                                self.adapt)
+        assert np.allclose(stimuli,s.dot(dictionary),atol=1e-5)
+
+    def test_momentum(self):
+        coeffs = np.zeros(shape=(self.num,self.num))
+        #Test for correct outputs for simple data
+        dictionary = np.diag(np.ones(self.num))
+        stimuli = np.diag(np.ones(self.num))
+        s,u,thresh = lcam.infer(dictionary,
+                                stimuli,
+                                self.eta,
+                                self.lamb,
+                                self.nIter,
+                                self.adapt)
+        assert np.allclose(s,np.diag(np.ones(self.num)))
+        assert np.allclose(u,np.diag(np.ones(self.num)))
+        #Test on random data
+        dictionary = self.rng.randn(self.numDict,self.dataSize)
+        dictionary = np.sqrt(np.diag(1/np.diag(dictionary.dot(dictionary.T)))).dot(dictionary)
+        stimuli = self.rng.randn(self.numStim,self.dataSize)
+        s,u,thresh = lcam.infer(dictionary,
                                 stimuli,
                                 self.eta,
                                 self.lamb,
