@@ -7,7 +7,7 @@
 import numpy as np
 
 #Initialize settings for inference
-def infer(basis,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt,rho=.5):
+def infer(basis,stimuli,eta,lamb,nIter,adapt,coeffs=None,mom=None,softThresh=0,rho=.5):
     """Infers sparse coefficients for dictionary elements when representing a stimulus using LCA algorithm.
 
         Args:
@@ -32,8 +32,12 @@ def infer(basis,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt,rho=.5):
     numStim = stimuli.shape[0]
     dataSize = basis.shape[1]
     #Initialize u and s
-    u = np.array([coeffs[ii] for ii in xrange(numStim)])
+    u = np.zeros((numStim, numDict))
+    if coeffs is not None:
+        u[:] = coeffs
     u_v = np.zeros_like(u)
+    if mom is not None:
+        u_v[:] = mom 
     s = np.zeros_like(u)
 
     # Calculate c: overlap of basis functions with each other minus identity

@@ -7,7 +7,7 @@
 import numpy as np
 
 #Initialize settings for inference
-def infer(basis,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt):
+def infer(basis, stimuli, eta, lamb, nIter, adapt, coeffs=None, softThresh=0):
     """Infers sparse coefficients for dictionary elements when representing a stimulus using LCA algorithm.
 
         Args:
@@ -32,7 +32,9 @@ def infer(basis,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt):
     numStim = stimuli.shape[0]
     dataSize = basis.shape[1]
     #Initialize u and s
-    u = np.array([coeffs[ii] for ii in xrange(numStim)])
+    u = np.zeros((numStim, numDict))
+    if coeffs is not None:
+        u[:] = np.atleast_2d(coeffs)
     s = np.zeros_like(u)
     ci = np.zeros((numStim, numDict))
 

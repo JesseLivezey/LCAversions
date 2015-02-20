@@ -31,13 +31,14 @@ subroutine lca(basis, stimuli, eta, lamb, nIter, softThresh, adapt, s, u, thresh
   call DGEMM("n","t",nBasis,nBasis,length,alpha,basis,nBasis,basis,nBasis,beta,c,nBasis)
   do ii=0,nbasis-1
      c(ii,ii) = 0.0
-     !do jj=0,ii-1
-     !   c(ii,jj) = DDOT(length,basis(ii,:),1,basis(jj,:),1)
-        !c(jj,ii) = c(ii,jj)
-     !end do
   end do
   call DGEMM("n","t",nStimuli,nBasis,length,alpha,stimuli,nStimuli,basis,nBasis,beta,b,nStimuli)
-  thresh = thresh*SUM(ABS(b))/SIZE(b)
+  do ii=0,nStimuli-1
+    do jj=0,nBasis-1
+      thresh(ii) = thresh(ii)+ABS(b(ii,jj))
+    end do
+    thresh(ii) = thresh(ii)/nBasis
+  end do
   do jj=0,nIter-1
      call DSYMM("r","l",nStimuli,nBasis,alpha,c,nBasis,s,nStimuli,beta,ci,nStimuli)
      u = eta*(b-ci)+(1-eta)*u

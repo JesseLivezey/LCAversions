@@ -30,16 +30,19 @@ def iterate(c,b,ci,u,s,eta,thresh,lamb,adapt,softThresh):
         else:
             s[i,j] = u[i,j]
         if thresh[i] > lamb:
-         thresh[i] = thresh[i]*lamb
+            thresh[i] = thresh[i]*lamb
 
-def infer(dictionary,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt):
+def infer(dictionary,stimuli,eta,lamb,nIter,adapt, coeffs=None, softThresh=0):
 #Get Blas routines
     blas = cublas.Blas()
 #Initialize arrays
     numDict = dictionary.shape[0]
     numStim = stimuli.shape[0]
     dataLength = stimuli.shape[1]
-    d_u = cuda.to_device(np.zeros((numStim,numDict),dtype=np.float32,order='F'))
+    u = np.zeros((numStim, numDict), dtype=np.float32, order='F')
+    if coeffs is not None:
+        u[:] = np.atleast_2d(coeffs)
+    d_u = cuda.to_device(u)
     d_s = cuda.to_device(np.zeros((numStim,numDict),dtype=np.float32,order='F'))
     d_b = cuda.to_device(np.zeros((numStim,numDict),dtype=np.float32,order='F'))
     d_ci = cuda.to_device(np.zeros((numStim,numDict),dtype=np.float32,order='F'))

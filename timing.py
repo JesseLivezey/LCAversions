@@ -6,8 +6,6 @@ from timeit import default_timer as timer
 
 from LCAnumpy import lca as lcan
 from LCAfortran import lca as lcaf
-from LCAcythonv import lca as lcav
-#from LCAnumbaproc import lca as lcan
 from LCAnumbaprog import lca as lcag
 
 def main():
@@ -20,20 +18,20 @@ def main():
     nlong = 1
     
     #Setup variables for inference
-    numDict = int(4096)
+    numDict = int(2048)
     numBatch = int(128)
     dataSize = int(256)
     dictsIn = np.random.randn(numDict,dataSize)
     # LCA requires that dictionary be unit norm
     dictsIn = skp.normalize(dictsIn, axis=1)
-    coeffs = np.random.randn(numBatch,numDict)
     stimuli = np.random.randn(numBatch,dataSize)
     batchCoeffs = np.random.randn(numBatch,numDict)
+    coeffs = np.zeros((numBatch, numDict))
     eta = .01
     lamb = .05
     nIter = 300
-    softThresh = int(1)
     adapt = .99
+    softThresh = 0
     thresh = np.random.randn(numBatch)
     
     #LCA
@@ -45,7 +43,7 @@ def main():
     print params
              
     start = timer()
-    lcan.infer(dictsIn,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt)
+    lcan.infer(dictsIn,stimuli,eta,lamb,nIter,adapt)
     dt = timer()-start
     if dt < tshort:
         n_times = nshort
@@ -55,31 +53,12 @@ def main():
         n_times = nlong
     for ii in xrange(n_times-1):
         start = timer()
-        lcan.infer(dictsIn,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt)
+        lcan.infer(dictsIn,stimuli,eta,lamb,nIter,adapt)
         dt = dt+timer()-start
     dt = dt/(n_times)
     print '---------------Numpy based LCA----------------'
     print 'Average time over '+str(n_times)+' trials:'
     print '%f s' % dt
-
-    start = timer()
-    lcav.infer(dictsIn,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt)
-    dt = timer()-start
-    if dt < tshort:
-        n_times = nshort
-    elif dt < tmed:
-        n_times = nmed
-    else:
-        n_times = nlong
-    for ii in xrange(n_times-1):
-        start = timer()
-        lcav.infer(dictsIn,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt)
-        dt = dt+timer()-start
-    dt = dt/(n_times)
-    print '----------Vectorized Cython based LCA---------'
-    print 'Average time over '+str(n_times)+' trials:'
-    print '%f s' % dt
-    
 
     dictsIn = np.array(dictsIn,order='F')
     stimuli = np.array(stimuli,order='F')
@@ -105,31 +84,10 @@ def main():
     print 'Average time over '+str(n_times)+' trials:'
     print '%f s' % dt
 
-    """
-    start = timer()
-    lcag.infer(dictsIn,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt)
-    dt = timer()-start
-    if dt < tshort:
-        n_times = nshort
-    elif dt < tmed:
-        n_times = nmed
-    else:
-        n_times = nlong
-    for ii in xrange(n_times-1):
-        start = timer()
-        lcag.infer(dictsIn,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt)
-        dt = dt+timer()-start
-    dt = dt/(n_times)
-    print '-------------Numbapro CPU based LCA-----------'
-    print 'Average time over '+str(n_times)+' trials:'
-    print '%f s' % dt
-    """
-
     dictsIn = np.array(dictsIn,dtype=np.float32,order='F')
     stimuli = np.array(stimuli,dtype=np.float32,order='F')
-    coeffs = np.array(coeffs,dtype=np.float32,order='F')
     start = timer()
-    lcag.infer(dictsIn,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt)
+    lcag.infer(dictsIn,stimuli,eta,lamb,nIter,adapt)
     dt = timer()-start
     if dt < tshort:
         n_times = nshort
@@ -139,7 +97,7 @@ def main():
         n_times = nlong
     for ii in xrange(n_times-1):
         start = timer()
-        lcag.infer(dictsIn,coeffs,stimuli,eta,lamb,nIter,softThresh,adapt)
+        lcag.infer(dictsIn,stimuli,eta,lamb,nIter,adapt)
         dt = dt+timer()-start
     dt = dt/(n_times)
     print '----------------GPU based LCA-----------------'
