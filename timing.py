@@ -17,7 +17,7 @@ def main():
     tmed = 6
     nlong = 1
     
-    #Setup variables for inference
+    # Setup variables for inference
     numDict = int(2048)
     numBatch = int(128)
     dataSize = int(256)
